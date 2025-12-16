@@ -1,4 +1,4 @@
-def shallow_ppr_local(nodes_dict, entry_ids, ppr_context):
+def shallow_ppr_local(nodes_dict, entry_ids, ppr_context, debug=True):
     if not ppr_context:
         ppr_context = {
             'alpha':0.5,
@@ -35,5 +35,6 @@ def shallow_ppr_local(nodes_dict, entry_ids, ppr_context):
         k = len(entry_ids)
     k = max(k,8)
     top_nodes = sorted(pi.items(), key=lambda x: x[1], reverse=True)[:k]
-    print(f"PPR selected nodes: {len(top_nodes)}")
+    if debug:
+        print(f"PPR selected nodes: {len(top_nodes)}")
     return dict(top_nodes)

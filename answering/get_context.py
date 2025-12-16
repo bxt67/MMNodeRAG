@@ -14,7 +14,7 @@ def call_gemini(text, API_KEY):
     )
     return response.text
 
-def get_context(query_context, graph_context, embedding_context, API_KEY):
+def get_context(query_context, graph_context, embedding_context, API_KEY, debug = True):
     #Get values
     question = query_context['question']
     embedding_model = embedding_context['model']
@@ -27,7 +27,8 @@ def get_context(query_context, graph_context, embedding_context, API_KEY):
     prompt = question_decompose_prompt(question)
     response_text = call_gemini(prompt, API_KEY)
     finish_decomposition_time = time.time()
-    print(f"Decomposition time: {finish_decomposition_time - start:.2f} seconds.")
+    if debug:
+        print(f"Decomposition time: {finish_decomposition_time - start:.2f} seconds.")
     try:
         response_entities = json.loads(response_text)
     except Exception as e:
@@ -38,7 +39,8 @@ def get_context(query_context, graph_context, embedding_context, API_KEY):
         response_entities = [response_entities.upper()]
     else:
         response_entities = [ent.upper() for ent in response_entities]
-    print("Decomposed Question Response:", response_entities)
+    if debug:
+        print("Decomposed Question Response:", response_entities)
     #print("Response Processed")
     query_context['entities'] = response_entities
     #Extend to synonyms
@@ -54,16 +56,19 @@ def get_context(query_context, graph_context, embedding_context, API_KEY):
         synonym_ids = list(entity_node.source.split(","))
         synonyms = [graph[synonym_id].content for synonym_id in synonym_ids]
         all_synonyms.extend(synonyms)
-    print("Synonyms found:", len(all_synonyms))
+    if debug:
+        print("Synonyms found:", len(all_synonyms))
     query_context['entities'].extend(all_synonyms)
-    print(query_context['entities'])
+    if debug:
+        print(query_context['entities'])
     #query_context['ppr']['k_ppr'] = len(query_context['entities'])
     
     #Get query embedding
     query_context['embedding'] = embedding_model.encode([question], convert_to_numpy=True).astype(np.float32)
 
     #Retrieve relevant nodes
-    context = retrieve_relevant_nodes(graph_context, embedding_context, query_context)
-    print(f"Retrieval time: {time.time() - finish_decomposition_time:.2f} seconds.")
+    context = retrieve_relevant_nodes(graph_context, embedding_context, query_context, debug = debug)
+    if debug:
+        print(f"Retrieval time: {time.time() - finish_decomposition_time:.2f} seconds.")
     return context
 
