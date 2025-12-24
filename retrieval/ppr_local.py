@@ -28,9 +28,9 @@ def shallow_ppr_local(nodes_dict, entry_ids, ppr_context, debug=True):
     #add remaining residual probabilities to PPR scores
     for node_id, residual in r.items():
         pi[node_id] = pi.get(node_id, 0) + residual
-    print([pi[node_id] for node_id in entry_ids])
     for node_id in entry_ids:
         pi[node_id] = -1.0  #exclude entry nodes
+        pi.pop(node_id)
     #get top k nodes by PPR scores
     pi_sorted = sorted(pi.items(), key=lambda x: x[1], reverse=True)
     if not k:
@@ -38,7 +38,7 @@ def shallow_ppr_local(nodes_dict, entry_ids, ppr_context, debug=True):
         total_mass = sum([pi[key] for key in pi.keys() if pi[key] > 0])
         mass = 0
         index = 0
-        while index < len(pi_sorted) and mass < 0.5 * total_mass:
+        while index < len(pi_sorted) and mass < 0.25 * total_mass:
             node = pi_sorted[index]
             pi_value = node[1]
             if pi_value <=0:
@@ -50,4 +50,8 @@ def shallow_ppr_local(nodes_dict, entry_ids, ppr_context, debug=True):
         top_nodes = pi_sorted[:k]
     if debug:
         print(f"PPR selected nodes: {len(top_nodes)}")
-    return dict(top_nodes)
+    top_nodes = dict(top_nodes)
+    if debug:
+        for key in top_nodes:
+            print(f"{key}: {top_nodes[key]}")
+    return top_nodes

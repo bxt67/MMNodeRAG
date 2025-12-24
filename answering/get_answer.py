@@ -104,7 +104,6 @@ while True:
         print("-"*100)
         full_context = "\n\n".join(context.values())
         prompt = answer_prompt(full_context, question)
-        """
         response = call_gemini(prompt)
         answer = response.text
         print("Answer Generated")
@@ -116,7 +115,6 @@ while True:
         print(f"Prompt Tokens (Input): {usage.prompt_token_count}")
         print(f"Candidate Tokens (Output): {usage.candidates_token_count}")
         print(f"Total Tokens: {usage.total_token_count}")
-        """
         print(f"Answer generation time: {time.time() - finish_retrieval_time:.2f} seconds.")
         print(f"Total time taken: {time.time() - start:.2f} seconds.")
     except Exception as e:

@@ -65,5 +65,7 @@ def retrieve_relevant_nodes(graph_context, embedding_context, query_context, deb
         node = graph[node_id]
         if node.node_type in ['N','O']: #remove non-informative nodes
             continue
+        if node_id in content:
+            continue
         content[node_id] = node.content
     return content
