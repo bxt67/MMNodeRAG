@@ -64,8 +64,8 @@ def compute_context_recall(
     
     prompt = CONTEXT_RECALL_PROMPT.format(
         question=question,
-        context=context_str[:10000],
-        answer=reference_answer[:2000]
+        context=context_str,
+        answer=reference_answer
     )
     
     for attempt in range(1, max_retries + 1):

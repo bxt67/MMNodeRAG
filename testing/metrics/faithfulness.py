@@ -68,8 +68,8 @@ def compute_faithfulness(
     total_token_usage = 0
     # Step 1: Generate atomic statements from answer
     prompt = STATEMENT_GENERATION_PROMPT.format(
-        question=question[:500],
-        answer=answer[:3000]
+        question=question,
+        answer=answer
     )
     
     statements = []
@@ -89,8 +89,8 @@ def compute_faithfulness(
     
     # Step 2: Evaluate statement faithfulness
     eval_prompt = FAITHFULNESS_EVALUATION_PROMPT.format(
-        context=context_str[:10000],
-        statements=json.dumps(statements)[:5000]
+        context=context_str,
+        statements=json.dumps(statements)
     )
     
     for attempt in range(1,max_retries + 1):
