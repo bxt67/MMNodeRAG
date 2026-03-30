@@ -1,5 +1,2 @@
-API_KEY.txt
-inspect/
-answering/answer.txt
-answering/context.txt
-GraphRAG-Benchmark/
+.venv/
+InfoSeek/
