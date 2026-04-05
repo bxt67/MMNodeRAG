@@ -1,1 +1,1 @@
-Chunking -> Text Decomposition -> Graphs
+Preprocess -> Build Graph -> Evaluation -> Answering
