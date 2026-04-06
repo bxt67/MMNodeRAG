@@ -112,9 +112,101 @@ def validate_response(response, original_entities):
             if not isinstance(entity, str):
                 return False
     flat_response = [e for cluster in response for e in cluster]
-    return len(flat_response) == len(set(flat_response)) and set(flat_response) == set(original_entities)
+    return set(flat_response) == set(original_entities)
+
+#construct base graph
+synonym_graph = nx.Graph()
+for entity in entities:
+    synonym_graph.add_node(entity)
+total_tokens = 0
+for cluster in clusters:
+    group = [entities[node] for node in cluster]
+    for i in range(len(group)):
+        for j in range(i + 1, len(group)):
+            synonym_graph.add_edge(group[i], group[j])
 
 
+#detect large connected components to validate with LLM
+e_list = set()
+for group in list(nx.connected_components(synonym_graph)):
+    if len(group) > 5:
+        e_list.update(group)
+
+problematic_edges = [
+    (u, v) for u, v in synonym_graph.edges()
+    if u in e_list and v in e_list
+]
+synonym_graph.remove_edges_from(problematic_edges)
+
+problematic_clusters = []
+for cluster in clusters:
+    if len(cluster) > 20:
+        continue
+    if any(entities[i] in e_list for i in cluster):
+        problematic_clusters.append([entities[i] for i in cluster])
+
+def merge_lists(lists):
+    sets = [set(lst) for lst in lists]
+    merged = True
+    while merged:
+        merged = False
+        new_sets = []
+        used = [False] * len(sets)
+
+        for i in range(len(sets)):
+            if used[i]:
+                continue
+            current = sets[i]
+            for j in range(i + 1, len(sets)):
+                if used[j]:
+                    continue
+                if len(set(current) & set(sets[j])) > 0 and len(current | sets[j]) <= 30:
+                    current = current | sets[j]
+                    used[j] = True
+                    merged = True
+
+            used[i] = True
+            new_sets.append(current)
+        sets = new_sets
+    return [list(s) for s in sets]
+
+problematic_clusters_merged = merge_lists(problematic_clusters)
+
+for cluster in tqdm(problematic_clusters_merged, desc="Processing clusters"):
+    if len(cluster) > 1:
+        prompt = entity_matching_prompt(cluster)
+        MAX_ATTEMPTS = 30
+        for attempt in range(MAX_ATTEMPTS):
+            try:
+                response,token = call_api(prompt)
+                response = ast.literal_eval(response.strip())
+                if validate_response(response, cluster):
+                    total_tokens += token
+                    break
+                else:
+                    raise ValueError("Invalid response format or content")
+            except Exception as e:
+                print(f"Attempt {attempt+1} failed for cluster {cluster}: {e}")
+                time.sleep(5)
+                if attempt == MAX_ATTEMPTS - 1:
+                    print(f"Max attempts reached. Skipping cluster: {cluster}.")
+                    response = [cluster]  # fallback to original cluster
+        for group in response:
+            for i in range(len(group)):
+                for j in range(i + 1, len(group)):
+                    synonym_graph.add_edge(group[i], group[j])
+
+# Save synonym graph as edgelist
+output_path = os.path.join(DIR_PATH, "data/synonym_graph.edgelist")
+nx.write_edgelist(synonym_graph, output_path, delimiter="\t", data=False)
+print(f"Total tokens used for entity resolution: {total_tokens}")
+print(f"Total synonym edges: {synonym_graph.number_of_edges()}")
+
+
+
+
+
+"""
 synonym_graph = nx.Graph()
 for entity in entities:
     synonym_graph.add_node(entity)
@@ -148,3 +240,4 @@ output_path = os.path.join(DIR_PATH, "data/synonym_graph.edgelist")
 nx.write_edgelist(synonym_graph, output_path, delimiter="\t", data=False)
 print(f"Total tokens used for entity resolution: {total_tokens}")
 print(f"Total synonym edges: {synonym_graph.number_of_edges()}")
+"""
