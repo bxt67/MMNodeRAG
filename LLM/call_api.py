@@ -25,12 +25,12 @@ def call_api(content, model="qwen/qwen3.6-plus:free", mode = "openai", thinking 
         )
         return response.choices[0].message.content, response.usage.total_tokens
     elif mode == "gemini":
-        thinking_level = "low" if thinking else "minimal" 
+        thinking_level = 0 if thinking else 512 
         response = gemini_client.models.generate_content(
             model= model,
             contents= content,
             config= genai.types.GenerateContentConfig(
-                thinking_config = genai.types.ThinkingConfig(thinking_level = thinking_level)
+                thinking_config = genai.types.ThinkingConfig(thinkingBudget  = thinking_level)
             )
         )
         return response.text, response.usage.total_token_count
