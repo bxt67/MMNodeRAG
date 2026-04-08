@@ -33,6 +33,6 @@ def call_api(content, model="qwen/qwen3.6-plus:free", mode = "openai", thinking 
                 thinking_config = genai.types.ThinkingConfig(thinkingBudget  = thinking_level)
             )
         )
-        return response.text, response.usage.total_token_count
+        return response.text, response.usage_metadata.total_token_count
     else:
         raise ValueError("Unsupported API type.")
